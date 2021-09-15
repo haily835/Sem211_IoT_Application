@@ -30,10 +30,11 @@
                 android:textStyle="bold" />
 
             <ImageView
-                android:layout_alignParentRight="true"
                 android:layout_width="62dp"
                 android:layout_height="62dp"
-                android:src="@drawable/bk_logo"/>
+                android:scaleType="fitCenter"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/bach_khoa" />
 
         </RelativeLayout>
 
@@ -46,6 +47,7 @@
             <androidx.cardview.widget.CardView
                 android:layout_columnWeight="1"
                 android:layout_rowWeight="1"
+                android:layout_gravity="fill_horizontal"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 app:cardCornerRadius="12dp"
@@ -57,14 +59,25 @@
                     android:gravity="center"
                     android:padding="16dp"
                     android:layout_height="match_parent">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Temperature"
+                            android:textColor="@color/black"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/temp_icon">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Temperature"
-                        android:textColor="@color/black"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                        </ImageView>
+
+                    </LinearLayout>
+
 
                     <TextView
                         android:id="@+id/tempText"
@@ -79,6 +92,7 @@
             <androidx.cardview.widget.CardView
                 android:layout_columnWeight="1"
                 android:layout_rowWeight="1"
+                android:layout_gravity="fill_horizontal"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 app:cardCornerRadius="12dp"
@@ -112,11 +126,13 @@
             <androidx.cardview.widget.CardView
                 android:layout_columnWeight="1"
                 android:layout_rowWeight="1"
+                android:layout_gravity="fill_horizontal"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 app:cardCornerRadius="12dp"
                 android:layout_margin="12dp"
                 app:cardElevation="6dp">
+
                 <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
@@ -139,12 +155,36 @@
                         android:textColor="@color/purple_500"
                         android:textSize="38sp"
                         android:textStyle="bold" />
+
+                    <ToggleButton
+                        android:id="@+id/ledToggleButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/toggle_selector"
+                        android:checked="false"
+                        android:text=""
+                        android:textOff=""
+                        android:textOn="" />
                 </LinearLayout>
+
+                <com.github.ybq.android.spinkit.SpinKitView
+                    xmlns:app="http://schemas.android.com/apk/res-auto"
+                    android:id="@+id/ledLoadingSpin"
+                    style="@style/SpinKitView.Large.Circle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:background="@color/cardview_light_background"
+                    android:visibility="invisible"
+                    app:SpinKit_Color="@color/purple_200" />
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
                 android:layout_columnWeight="1"
                 android:layout_rowWeight="1"
+                android:layout_gravity="fill_horizontal"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 app:cardCornerRadius="12dp"
@@ -178,6 +218,7 @@
             <androidx.cardview.widget.CardView
                 android:layout_columnWeight="2"
                 android:layout_rowWeight="2"
+                android:layout_gravity="fill_horizontal"
                 android:layout_columnSpan="2"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
