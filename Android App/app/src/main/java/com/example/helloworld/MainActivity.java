@@ -14,6 +14,10 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.ybq.android.spinkit.SpinKitView;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -23,8 +27,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -41,6 +47,8 @@ In build.gradle add:
 Http request library using
 implementation 'com.android.volley:volley:1.2.1'
 
+How to create chart: https://viblo.asia/p/mpandroidchart-and-example-Az45badzlxY
+
 Q.Hai
 * */
 public class MainActivity extends AppCompatActivity {
@@ -51,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
     // link to TextView in res/layout/activity_main.xml
     Dictionary<String, TextView> UIElements = new Hashtable<String, TextView>();
     ToggleButton ledToggleButton;
+    LineChart chart;
+
+
+    // Temperature data
+    List<Entry> entries = new ArrayList<Entry>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         fetchLastData("bbc-switch");
         fetchLastData("bbc-temp");
 
+        chart = (LineChart) findViewById(R.id.chart);
 
         ledToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -104,9 +118,7 @@ public class MainActivity extends AppCompatActivity {
                         sendingAgain = true;
                     }
                 }
-
                 // resending the message here
-
             }
         };
 
@@ -147,6 +159,21 @@ public class MainActivity extends AppCompatActivity {
 
                 if (topic.equals("haily835/f/bbc-temp")) {
                     UIElements.get("bbc-temp").setText(message.toString());
+
+                    // update the chart
+                    int nextPoint = entries.size();
+
+                    if (nextPoint > 10) {
+                        entries.remove(0);
+                    }
+
+                    entries.add(new Entry(nextPoint, Float.parseFloat(message.toString())));
+                    LineDataSet dataSet = new LineDataSet(entries, "Temp");
+
+                    LineData lineData = new LineData(dataSet);
+                    chart.setData(lineData);
+                    chart.invalidate(); // refresh
+
                 } else if (topic.equals("haily835/f/bbc-led")) {
                     String data = message.toString();
                     UIElements.get("bbc-led").setText(data);
@@ -204,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             JSONObject json = new JSONObject(response);
                             String lastValue = json.getString("last_value");
+
                             UIElements.get(topic).setText(lastValue);
 
                             if (topic.equals("bbc-led")) {
@@ -218,6 +246,20 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
 
+                            if (topic.equals("bbc-temp")){
+                                int nextPoint = entries.size();
+
+                                if (nextPoint > 10) {
+                                    entries.remove(0);
+                                }
+
+                                entries.add(new Entry(nextPoint, Float.parseFloat(lastValue)));
+                                LineDataSet dataSet = new LineDataSet(entries, "Temp");
+
+                                LineData lineData = new LineData(dataSet);
+                                chart.setData(lineData);
+                                chart.invalidate(); // refresh
+                            }
 
                         } catch (JSONException e) {
                             e.printStackTrace();

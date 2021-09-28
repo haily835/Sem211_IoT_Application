@@ -42,7 +42,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:columnCount="2"
-            android:rowCount="3">
+            android:rowCount="10">
 
             <androidx.cardview.widget.CardView
                 android:layout_columnWeight="1"
@@ -217,33 +217,35 @@
 
             <androidx.cardview.widget.CardView
                 android:layout_columnWeight="2"
-                android:layout_rowWeight="2"
+                android:layout_rowWeight="3"
                 android:layout_gravity="fill_horizontal"
                 android:layout_columnSpan="2"
+                android:layout_rowSpan="3"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 app:cardCornerRadius="12dp"
                 android:layout_margin="12dp"
                 app:cardElevation="6dp">
+
                 <LinearLayout
-                    android:orientation="vertical"
                     android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:gravity="center"
-                    android:padding="16dp"
-                    android:layout_height="match_parent">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Chart"
+                        android:text="Temperature Chart"
                         android:textColor="@color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
-                    <ImageView
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/chart"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:src="@drawable/sample_chart"/>
+                        android:layout_height="177dp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

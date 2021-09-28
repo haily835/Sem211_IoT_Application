@@ -32,6 +32,7 @@ repositories {
     maven {
         url "https://repo.eclipse.org/content/repositories/paho-snapshots/"
     }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -52,4 +53,7 @@ dependencies {
 
     // display loading animation
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
+
+    // chart
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 }
