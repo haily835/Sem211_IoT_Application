@@ -3,6 +3,7 @@ package com.example.helloworld;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.os.Debug;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -19,6 +20,8 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.ybq.android.spinkit.SpinKitView;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
@@ -28,12 +31,14 @@ import org.json.JSONObject;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+
 
 /*
 Fix error mqtt Load... library:
@@ -61,9 +66,10 @@ public class MainActivity extends AppCompatActivity {
     ToggleButton ledToggleButton;
     LineChart chart;
 
-
+    Dictionary<String, String> weather = new Hashtable<String, String>();
     // Temperature data
     List<Entry> entries = new ArrayList<Entry>();
+    String ledData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,10 +79,10 @@ public class MainActivity extends AppCompatActivity {
 
         // binding
         ledToggleButton = findViewById(R.id.ledToggleButton);
-        UIElements.put("bbc-led", findViewById(R.id.ledText));
         UIElements.put("bbc-hum", findViewById(R.id.humText));
         UIElements.put("bbc-switch", findViewById(R.id.switchText));
         UIElements.put("bbc-temp", findViewById(R.id.tempText));
+        UIElements.put("bbc-weather", findViewById(R.id.weather));
 
 
         // get last_value from api
@@ -84,23 +90,27 @@ public class MainActivity extends AppCompatActivity {
         fetchLastData("bbc-hum");
         fetchLastData("bbc-switch");
         fetchLastData("bbc-temp");
+        fetchLastData("bbc-weather");
 
         chart = (LineChart) findViewById(R.id.chart);
 
         ledToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                String data = b ? "1" : "0";
+                ledData = b ? "1" : "0";
+
+                waitingPeriod = 3;
 
                 // Go to the feed on Adafruit, find MQTT by key and paste in
                 SpinKitView ledLoadingSpin = findViewById(R.id.ledLoadingSpin);
                 ledLoadingSpin.setVisibility(View.VISIBLE);
-                sendDataMQTT("haily835/feeds/bbc-led", data);
+                Log.d("mqtt", "Sending to haily835/feeds/bbc-led" + ledData);
+                sendDataMQTT("haily835/feeds/bbc-led", ledData);
             }
         });
 
-        setupScheduler();
 
+        setupScheduler();
         startMQTT();
     }
 
@@ -115,10 +125,10 @@ public class MainActivity extends AppCompatActivity {
                 if (waitingPeriod > 0) {
                     waitingPeriod--;
                     if (waitingPeriod == 0) {
-                        sendingAgain = true;
+                        Log.d("mqtt", "Scheduler resend message");
+                        sendDataMQTT("haily835/feeds/bbc-led", ledData);
                     }
                 }
-                // resending the message here
             }
         };
 
@@ -127,12 +137,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     int waitingPeriod = 0;
-    boolean sendingAgain = false;
 
     private void startMQTT() {
-
-        waitingPeriod = 3;
-        sendingAgain = false;
 
         // create unique id for different client; if use same ID may cause error
         UUID uuid = UUID.randomUUID();
@@ -141,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         // task assign a new ID by random otherwise if we install on other app we have to reassigned
         mqttHelper = new MQTTHelper(getApplicationContext(), uuidAsString);
 
-        // ctrl space -> auto added for you
+        // ctrl space code suggestion
         mqttHelper.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
@@ -159,42 +165,26 @@ public class MainActivity extends AppCompatActivity {
 
                 if (topic.equals("haily835/f/bbc-temp")) {
                     UIElements.get("bbc-temp").setText(message.toString());
-
-                    // update the chart
-                    int nextPoint = entries.size();
-
-                    if (nextPoint > 10) {
-                        entries.remove(0);
-                    }
-
-                    entries.add(new Entry(nextPoint, Float.parseFloat(message.toString())));
-                    LineDataSet dataSet = new LineDataSet(entries, "Temp");
-
-                    LineData lineData = new LineData(dataSet);
-                    chart.setData(lineData);
-                    chart.invalidate(); // refresh
-
+                    updateChart(message.toString());
                 } else if (topic.equals("haily835/f/bbc-led")) {
                     String data = message.toString();
-                    UIElements.get("bbc-led").setText(data);
-                    SpinKitView ledLoadingSpin = findViewById(R.id.ledLoadingSpin);
-                    ledLoadingSpin.setVisibility(View.INVISIBLE);
-                    ledToggleButton.setChecked(data.equals("0") ? false : true);
+
+                    // new feature
+                    if (data.equals(ledData)) {
+                        waitingPeriod = 0;
+                        Log.d("mqtt", "Message is sent succesfully");
+                        SpinKitView ledLoadingSpin = findViewById(R.id.ledLoadingSpin);
+                        ledLoadingSpin.setVisibility(View.INVISIBLE);
+                        ledToggleButton.setChecked(data.equals("0") ? false : true);
+                    }
                 } else if (topic.equals("haily835/f/bbc-hum")) {
                     UIElements.get("bbc-hum").setText(message.toString());
                 } else if (topic.equals("haily835/f/bbc-switch")) {
                     UIElements.get("bbc-switch").setText(message.toString());
+                } else if (topic.equals("haily835/f/bbc-weather")) {
+                    updateWeatherText(message.toString());
                 }
-
-                /*
-                TODO:
-                if the receive message = the message that you send
-                    Set waiting_period = 0
-                    sending_message_agin = true
-                * */
-
             }
-
             @Override
             public void deliveryComplete(IMqttDeliveryToken token) {
 
@@ -232,33 +222,26 @@ public class MainActivity extends AppCompatActivity {
                             JSONObject json = new JSONObject(response);
                             String lastValue = json.getString("last_value");
 
-                            UIElements.get(topic).setText(lastValue);
-
-                            if (topic.equals("bbc-led")) {
-                                // ---------led toggle button ------------------
-                                // initial state of toggle button from the last value of LED
-                                if (UIElements.get("bbc-led").getText().toString().equals("0")) {
-                                    ledToggleButton.setChecked(false);
-                                    Log.d("mqtt", "LED is already OFF");
-                                } else {
-                                    ledToggleButton.setChecked(true);
-                                    Log.d("mqtt", "LED is already ON " + UIElements.get("bbc-led").getText().toString());
-                                }
-                            }
-
-                            if (topic.equals("bbc-temp")){
-                                int nextPoint = entries.size();
-
-                                if (nextPoint > 10) {
-                                    entries.remove(0);
-                                }
-
-                                entries.add(new Entry(nextPoint, Float.parseFloat(lastValue)));
-                                LineDataSet dataSet = new LineDataSet(entries, "Temp");
-
-                                LineData lineData = new LineData(dataSet);
-                                chart.setData(lineData);
-                                chart.invalidate(); // refresh
+                            switch(topic) {
+                                case "bbc-led":
+                                    // ---------led toggle button ------------------
+                                    // initial state of toggle button from the last value of LED
+                                    if (lastValue.equals("0")) {
+                                        ledToggleButton.setChecked(false);
+                                    } else {
+                                        ledToggleButton.setChecked(true);
+                                    }
+                                    break;
+                                case "bbc-temp":
+                                    UIElements.get("bbc-temp").setText(lastValue);
+                                    updateChart(lastValue);
+                                    break;
+                                case "bbc-weather":
+                                    updateWeatherText(lastValue);
+                                    break;
+                                default:
+                                    UIElements.get(topic).setText(lastValue);
+                                    break;
                             }
 
                         } catch (JSONException e) {
@@ -269,4 +252,31 @@ public class MainActivity extends AppCompatActivity {
 
         queue.add(stringRequest);
     }
+
+    private void updateChart(String newPoint) {
+        int nextPoint = entries.size();
+
+        if (nextPoint > 10) {
+            entries.remove(0);
+        }
+
+        entries.add(new Entry(nextPoint, Float.parseFloat(newPoint)));
+        LineDataSet dataSet = new LineDataSet(entries, "Temp");
+
+        LineData lineData = new LineData(dataSet);
+        chart.setData(lineData);
+        chart.invalidate(); // refresh
+    }
+
+    private void updateWeatherText(String data) {
+        Dictionary<String, String> retMap = new Gson().fromJson(
+                data, new TypeToken<Hashtable<String, String>>() {}.getType()
+        );
+        String txt = "Temperature: " + retMap.get("temp") + "\n";
+        txt += "Status: " + retMap.get("status") + "\n";
+        txt += retMap.get("location") + "\n";
+
+        UIElements.get("bbc-weather").setText(txt);
+    }
+
 }

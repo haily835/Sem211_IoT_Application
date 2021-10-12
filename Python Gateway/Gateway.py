@@ -5,6 +5,10 @@ import time
 import random
 from queue import Queue
 
+from pyowm.owm import OWM
+import geocoder # get location
+
+
 # ---------- connect to adafruit ------------------
 # 1. create a client
 client = mqtt.Client(str(uuid.uuid4()))
@@ -29,9 +33,11 @@ client.on_subscribe = on_subscribe
 # ------------ Listen for messages -------------
 def on_message(client, userdata, message):
     print("Received from feed {0} value: {1}".format(message.topic , str(message.payload.decode("utf-8"))))
+    if isMicrobitConnected:
+        ser.write((str(message.payload) + "#").encode())
 client.on_message = on_message
 
-
+#------------serial connection-----------------------------
 def getPort():
     ports = serial.tools.list_ports.comports()
     N = len(ports)
@@ -91,8 +97,47 @@ client.subscribe('{0}/feeds/{1}'.format('haily835', 'bbc-hum'), 0)
 client.subscribe('{0}/feeds/{1}'.format('haily835', 'bbc-led'), 0)
 client.loop_start()
 
+
+#--------------- get weather data in python------------
+weather_timer = 30
+owm = OWM('d841bb957d163d5d135e9f91267b8517')
+mgr = owm.weather_manager()
+
+location = geocoder.ip('me')
+address = location.geojson['features'][0]['properties']['address']
+lat = location.latlng[0]
+lon = location.latlng[1]
+
+owm = OWM('d841bb957d163d5d135e9f91267b8517')
+mgr = owm.weather_manager()
+
+def checkWeatherAPI():
+    global weather_timer
+    if weather_timer == 30:
+        one_call = mgr.one_call(lat=lat, lon=lon)
+
+        weather = {
+            "temp": str(one_call.current.temperature(unit='celsius')['temp']),
+            "feels_like": str(one_call.current.temperature(unit='celsius')['feels_like']),
+            "humidity": str(one_call.current.humidity),
+            "wind": str(one_call.current.wind()),
+            "status": str(one_call.current.status),
+            "last_check": str(one_call.current.reference_time(timeformat='iso')),
+            "location": address,
+        }
+
+        client.publish('{0}/feeds/{1}'.format('haily835', 'bbc-weather',), payload=str(weather))
+
+        weather_timer = 0
+
+    else:
+        weather_timer += 1
+
+
 while True:
     if isMicrobitConnected:
         readSerial()
-
+        
+    checkWeatherAPI()
+    
     time.sleep(1)

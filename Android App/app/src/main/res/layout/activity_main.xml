@@ -45,6 +45,44 @@
             android:rowCount="10">
 
             <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_rowSpan="3"
+                android:layout_rowWeight="3"
+                android:layout_columnSpan="2"
+                android:layout_columnWeight="2"
+                android:layout_gravity="fill_horizontal"
+                android:layout_margin="12dp"
+                app:cardBackgroundColor="#009dff"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="6dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Weather at Gateway"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/weather"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
                 android:layout_columnWeight="1"
                 android:layout_rowWeight="1"
                 android:layout_gravity="fill_horizontal"
@@ -73,7 +111,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:src="@drawable/temp_icon">
-
                         </ImageView>
 
                     </LinearLayout>
@@ -83,7 +120,7 @@
                         android:id="@+id/tempText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/purple_500"
+                        android:textColor="#009dff"
                         android:textSize="38sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -117,7 +154,7 @@
                         android:id="@+id/humText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/purple_500"
+                        android:textColor="#009dff"
                         android:textSize="38sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -148,14 +185,6 @@
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/ledText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/purple_500"
-                        android:textSize="38sp"
-                        android:textStyle="bold" />
-
                     <ToggleButton
                         android:id="@+id/ledToggleButton"
                         android:layout_width="wrap_content"
@@ -178,7 +207,7 @@
                     android:layout_gravity="center"
                     android:background="@color/cardview_light_background"
                     android:visibility="invisible"
-                    app:SpinKit_Color="@color/purple_200" />
+                    app:SpinKit_Color="#009dff" />
             </androidx.cardview.widget.CardView>
 
             <androidx.cardview.widget.CardView
@@ -209,7 +238,7 @@
                         android:id="@+id/switchText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/purple_500"
+                        android:textColor="#009dff"
                         android:textSize="38sp"
                         android:textStyle="bold" />
                 </LinearLayout>
