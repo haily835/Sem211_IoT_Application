@@ -11,12 +11,15 @@ def subscribed(client, userdata, mid, granted_qos):
 
 def recv_message(client, userdata, message):
     print("Received: ", message.payload.decode("utf-8"))
-    temp_data = {'value': True}
+   
     try:
         jsonobj = json.loads(message.payload)
-        if jsonobj['method'] == "setValue":
-            temp_data['value'] = jsonobj['params']
-            client.publish('v1/devices/me/attributes', json.dumps(temp_data), 1)
+        if jsonobj['method'] == "setLedValue":
+            led_data = {'led_value': jsonobj['params']}
+            client.publish('v1/devices/me/attributes', json.dumps(led_data), 1)
+        if jsonobj['method'] == "setSwitchValue":
+            switch_data = {'switch_value': jsonobj['params']}
+            client.publish('v1/devices/me/attributes', json.dumps(switch_data), 1)
     except:
         pass
 
