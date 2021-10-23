@@ -14,23 +14,22 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import java.nio.charset.Charset;
+
 /**
  * Created by Le Trong Nhan on 18/02/2020.
  */
 
 public class MQTTHelper {
 
-    // normally we use http higher lever (application layer) of tcp, -> if use tcp -> faster
-    // tcp can be called as "socket connection"
-    final String serverUri = "tcp://io.adafruit.com:1883";
+    final String serverUri = "tcp://demo.thingsboard.io:1883";
 
 
     private String clientId = "";
-    final String subscriptionTopic = "haily835/f/+"; // wildcard to sub to all the topics of the account
+    final String subscriptionTopic = "v1/devices/me/attributes";
 
 
-    final String username = "haily835";
-    final String password = "aio_xNKp90vzzUnYtb9xYzHoBvnP9fRk";
+    final String accessToken = "HHXw2glNOY1Hyz7wWD5F";
 
     public MqttAndroidClient mqttAndroidClient;
 
@@ -69,9 +68,8 @@ public class MQTTHelper {
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setAutomaticReconnect(true);
         mqttConnectOptions.setCleanSession(false);
-        mqttConnectOptions.setUserName(username);
-        mqttConnectOptions.setPassword(password.toCharArray());
-
+        mqttConnectOptions.setUserName(accessToken);
+        mqttConnectOptions.setPassword("".toCharArray());
         try {
 
             mqttAndroidClient.connect(mqttConnectOptions, null, new IMqttActionListener() {
@@ -101,7 +99,7 @@ public class MQTTHelper {
 
     private void subscribeToTopic() {
         try {
-            mqttAndroidClient.subscribe(subscriptionTopic, 0, null, new IMqttActionListener() {
+            mqttAndroidClient.subscribe("v1/devices/me/attributes/response/+", 0, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.w("Mqtt","Subscribed!");
@@ -113,7 +111,6 @@ public class MQTTHelper {
                     Log.w("Mqtt", "Subscribed fail!");
                 }
             });
-
         } catch (MqttException ex) {
             System.err.println("Exceptionst subscribing");
             ex.printStackTrace();

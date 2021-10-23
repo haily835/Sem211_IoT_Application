@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.os.Debug;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -21,6 +22,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.ybq.android.spinkit.SpinKitView;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -29,6 +31,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +42,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+
+import tech.gusavila92.websocketclient.WebSocketClient;
 
 
 /*
@@ -65,11 +71,13 @@ public class MainActivity extends AppCompatActivity {
     Dictionary<String, TextView> UIElements = new Hashtable<String, TextView>();
     ToggleButton ledToggleButton;
     LineChart chart;
-
+    final Handler handler = new Handler();
     Dictionary<String, String> weather = new Hashtable<String, String>();
     // Temperature data
     List<Entry> entries = new ArrayList<Entry>();
     String ledData;
+
+    private WebSocketClient webSocketClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,32 +92,22 @@ public class MainActivity extends AppCompatActivity {
         UIElements.put("bbc-temp", findViewById(R.id.tempText));
         UIElements.put("bbc-weather", findViewById(R.id.weather));
 
-
-        // get last_value from api
-        fetchLastData("bbc-led");
-        fetchLastData("bbc-hum");
-        fetchLastData("bbc-switch");
-        fetchLastData("bbc-temp");
-        fetchLastData("bbc-weather");
-
         chart = (LineChart) findViewById(R.id.chart);
 
         ledToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                ledData = b ? "1" : "0";
+                ledData = b ? "{\"led_value\" : \"true\"}" : "{\"led_value\" : \"false\"}";
 
                 waitingPeriod = 3;
-
-                // Go to the feed on Adafruit, find MQTT by key and paste in
                 SpinKitView ledLoadingSpin = findViewById(R.id.ledLoadingSpin);
-                ledLoadingSpin.setVisibility(View.VISIBLE);
-                Log.d("mqtt", "Sending to haily835/feeds/bbc-led" + ledData);
-                sendDataMQTT("haily835/feeds/bbc-led", ledData);
+                // ledLoadingSpin.setVisibility(View.VISIBLE);
+                sendDataMQTT("v1/devices/me/telemetry", ledData);
             }
         });
 
 
+        createWebSocketClient();
         setupScheduler();
         startMQTT();
     }
@@ -133,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         // after 5s, wait 1s
-        timer.schedule(scheduler, 5000,1000);
+        // timer.schedule(scheduler, 5000,1000);
     }
 
     int waitingPeriod = 0;
@@ -142,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
 
         // create unique id for different client; if use same ID may cause error
         UUID uuid = UUID.randomUUID();
-        String uuidAsString = uuid. toString();
+        String uuidAsString = uuid.toString();
 
         // task assign a new ID by random otherwise if we install on other app we have to reassigned
         mqttHelper = new MQTTHelper(getApplicationContext(), uuidAsString);
@@ -162,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 Log.d("mqtt", "Received: " + message.toString() + " from " + topic);
-
+                UIElements.get("bbc-temp").setText(message.toString());
                 if (topic.equals("haily835/f/bbc-temp")) {
                     UIElements.get("bbc-temp").setText(message.toString());
                     updateChart(message.toString());
@@ -277,6 +275,94 @@ public class MainActivity extends AppCompatActivity {
         txt += retMap.get("location") + "\n";
 
         UIElements.get("bbc-weather").setText(txt);
+    }
+
+    private void updateUI(String name, String data) {
+        handler.post(new Runnable(){
+
+            public void run(){
+                UIElements.get(name).setText(data);
+            }
+        });
+
+    }
+
+    private void createWebSocketClient() {
+        URI uri;
+
+        String token = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJseXF1b2NoYWk4MzVAZ21haWwuY29tIiwic2NvcGVzIjpbIlRFTkFOVF9BRE1JTiJdLCJ1c2VySWQiOiI1ZTY1YWIyMC0yYWY4LTExZWMtYmI0NC04ZjQzODIxMGQ4YjciLCJlbmFibGVkIjp0cnVlLCJwcml2YWN5UG9saWN5QWNjZXB0ZWQiOnRydWUsImlzUHVibGljIjpmYWxzZSwidGVuYW50SWQiOiI1ZGJkZjk3MC0yYWY4LTExZWMtYmI0NC04ZjQzODIxMGQ4YjciLCJjdXN0b21lcklkIjoiMTM4MTQwMDAtMWRkMi0xMWIyLTgwODAtODA4MDgwODA4MDgwIiwiaXNzIjoidGhpbmdzYm9hcmQuaW8iLCJpYXQiOjE2MzQxMzc1NjIsImV4cCI6MTYzNTkzNzU2Mn0.sWAyn_GWbngXMei9jnZSXXLKXnt72wsBrrDSOIZ1mMWZEnSdiQ6CV7qcTig63qgbvxKY8irESsmodsDk311ORA";
+
+        try {
+            uri = new URI("wss://demo.thingsboard.io/api/ws/plugins/telemetry?token=" + token);
+        }
+        catch (URISyntaxException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        webSocketClient = new WebSocketClient(uri) {
+            @Override
+            public void onOpen() {
+                String data = "{\"tsSubCmds\":[{\"entityType\":\"DEVICE\",\"entityId\":\"bd6048f0-2af9-11ec-bb44-8f438210d8b7\",\"scope\":\"LATEST_TELEMETRY\",\"cmdId\":10}],\"historyCmds\":[],\"attrSubCmds\":[]}";
+                webSocketClient.send(data);
+            }
+
+            @Override
+            public void onTextReceived(String message) {
+                Log.d("ThingsBoard", message);
+                try {
+                    updateUI("bbc-temp", getDataFromJson("temperature", message));
+                    updateChart(getDataFromJson("temperature", message));
+                    updateUI("bbc-hum", getDataFromJson("humidity", message));
+
+                    String led = getDataFromJson("led_value", message);
+                    SpinKitView ledLoadingSpin = findViewById(R.id.ledLoadingSpin);
+                    ledLoadingSpin.setVisibility(View.INVISIBLE);
+                    ledToggleButton.setChecked(led.equals("false") ? false : true);
+                } catch (Throwable tx) {
+                    Log.e("error", tx.toString());
+                }
+            }
+
+            @Override
+            public void onBinaryReceived(byte[] data) {
+                System.out.println("onBinaryReceived");
+            }
+
+            @Override
+            public void onPingReceived(byte[] data) {
+                System.out.println("onPingReceived");
+            }
+
+            @Override
+            public void onPongReceived(byte[] data) {
+                System.out.println("onPongReceived");
+            }
+
+            @Override
+            public void onException(Exception e) {
+                System.out.println(e.getMessage());
+            }
+
+            @Override
+            public void onCloseReceived() {
+                System.out.println("onCloseReceived");
+            }
+        };
+
+        webSocketClient.setConnectTimeout(10000);
+        webSocketClient.setReadTimeout(60000);
+        webSocketClient.addHeader("Origin", "http://developer.example.com");
+        webSocketClient.enableAutomaticReconnection(5000);
+        webSocketClient.connect();
+    }
+
+    public String getDataFromJson(String telemetryKey, String message) {
+        JsonObject data = new Gson().fromJson(message, JsonObject.class);
+        return data.get("data").getAsJsonObject()
+                .get(telemetryKey).getAsJsonArray()
+                .get(0).getAsJsonArray()
+                .get(1).getAsString();
     }
 
 }

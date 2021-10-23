@@ -1,0 +1,19 @@
+Gson - json library to convert string => object
+Remember try catch
+    try {
+
+        JSONObject obj = new JSONObject(json);
+
+        Log.d("My App", obj.toString());
+        Log.d("phonetype value ", obj.getString("phonetype"));
+
+    } catch (Throwable tx) {
+        Log.e("My App", "Could not parse malformed JSON: \"" + json + "\"");
+    }
+
+
+Websocket lib: https://github.com/gusavila92/java-android-websocket-client
+
+Modify UI from another thread
+
+https://thingsboard.io/docs/reference/mqtt-api/#telemetry-upload-api

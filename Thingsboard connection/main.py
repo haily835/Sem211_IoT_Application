@@ -1,6 +1,7 @@
 import paho.mqtt.client as mqttclient
 import time
 import json
+import uuid
 
 BROKER_ADDRESS = "demo.thingsboard.io"
 PORT = 1883
@@ -16,10 +17,10 @@ def recv_message(client, userdata, message):
         jsonobj = json.loads(message.payload)
         if jsonobj['method'] == "setLedValue":
             led_data = {'led_value': jsonobj['params']}
-            client.publish('v1/devices/me/attributes', json.dumps(led_data), 1)
+            client.publish('v1/devices/me/telemetry', json.dumps(led_data), 1)
         if jsonobj['method'] == "setSwitchValue":
             switch_data = {'switch_value': jsonobj['params']}
-            client.publish('v1/devices/me/attributes', json.dumps(switch_data), 1)
+            client.publish('v1/devices/me/telemetry', json.dumps(switch_data), 1)
     except:
         pass
 
@@ -30,7 +31,7 @@ def  connected(client, usedata, flags, rc):
     else:
         print("Connection is failed")
 
-client = mqttclient.Client("Gateway_Thingsboard")
+client = mqttclient.Client(str(uuid.uuid4()))
 client.username_pw_set(THINGS_BOARD_ACCESS_TOKEN)
 
 client.on_connect = connected
@@ -51,9 +52,6 @@ while True:
         collect_data = {'temperature': temp, 'humidity': humi, 'lat':10.2, 'lon':106.2}
         temp += 1
         humi += 1
-        client.publish('v1/devices/me/telemetry', json.dumps(collect_data), 1)
+        # client.publish('v1/devices/me/telemetry', json.dumps(collect_data), 1)
 
     time.sleep(1)
-
-
-
