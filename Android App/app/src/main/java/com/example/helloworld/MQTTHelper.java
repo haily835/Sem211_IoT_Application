@@ -26,7 +26,7 @@ public class MQTTHelper {
 
 
     private String clientId = "";
-    final String subscriptionTopic = "v1/devices/me/attributes";
+    final String subscriptionTopic = "";
 
 
     final String accessToken = "HHXw2glNOY1Hyz7wWD5F";
@@ -99,7 +99,7 @@ public class MQTTHelper {
 
     private void subscribeToTopic() {
         try {
-            mqttAndroidClient.subscribe("v1/devices/me/attributes/response/+", 0, null, new IMqttActionListener() {
+            mqttAndroidClient.subscribe("v1/devices/me/rpc/response/+", 0, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     Log.w("Mqtt","Subscribed!");
@@ -115,5 +115,6 @@ public class MQTTHelper {
             System.err.println("Exceptionst subscribing");
             ex.printStackTrace();
         }
+
     }
 }

@@ -22,6 +22,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.ybq.android.spinkit.SpinKitView;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
@@ -30,6 +31,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONStringer;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -98,17 +100,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 ledData = b ? "{\"led_value\" : \"true\"}" : "{\"led_value\" : \"false\"}";
+                String rpc = "";
+                if (b) {
+                    rpc = "{\"method\": \"setLedValue\", \"params\": {\"data\": true}}";
+                } else {
+                    rpc = "{\"method\": \"setLedValue\", \"params\": {\"data\": false}}";
+                }
+
 
                 waitingPeriod = 3;
-                SpinKitView ledLoadingSpin = findViewById(R.id.ledLoadingSpin);
+                // SpinKitView ledLoadingSpin = findViewById(R.id.ledLoadingSpin);
                 // ledLoadingSpin.setVisibility(View.VISIBLE);
-                sendDataMQTT("v1/devices/me/telemetry", ledData);
+
+                Log.d("mqtt", rpc);
+
+                sendDataMQTT("v1/devices/me/rpc/request/1", rpc);
             }
         });
 
 
         createWebSocketClient();
-        setupScheduler();
+        // setupScheduler();
         startMQTT();
     }
 
