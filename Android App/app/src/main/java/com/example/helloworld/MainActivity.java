@@ -169,6 +169,11 @@ public class MainActivity extends AppCompatActivity {
                 } else if (topic.equals("haily835/f/bbc-led")) {
                     String data = message.toString();
 
+
+                    if (waitingPeriod == 0) {
+                        ledToggleButton.setChecked(data.equals("0") ? false : true);
+                    }
+
                     // new feature
                     if (data.equals(ledData)) {
                         waitingPeriod = 0;
